@@ -17,16 +17,16 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type UserHandler struct {
+type UserProductHandler struct {
 	UserProductClient *clients.UserProductServiceClient
 }
 
-func NewUserHandler(userProductClient *clients.UserProductServiceClient) *UserHandler {
-	return &UserHandler{UserProductClient: userProductClient}
+func NewUserProductHandler(userProductClient *clients.UserProductServiceClient) *UserProductHandler {
+	return &UserProductHandler{UserProductClient: userProductClient}
 }
 
 // CreateUser handles POST /users
-func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var reqBody struct {
 		Email     string `json:"email"`
 		Username  string `json:"username"`
@@ -65,7 +65,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUser handles GET /users/{user_id}
-func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
@@ -88,7 +88,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateUser handles PUT /users/{user_id}  
-func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
@@ -134,7 +134,7 @@ func (h *UserHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteUser handles DELETE /users/{user_id}
-func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
@@ -156,7 +156,7 @@ func (h *UserHandler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetFavoritesByUserId handles GET /users/{user_id}/favorites
-func (h *UserHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
@@ -179,7 +179,7 @@ func (h *UserHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http.Reques
 }
 
 // CreateFavorite handles POST /users/{user_id}/favorites
-func (h *UserHandler) CreateFavorite(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     userID := vars["user_id"]
     if userID == "" {
@@ -216,9 +216,9 @@ func (h *UserHandler) CreateFavorite(w http.ResponseWriter, r *http.Request) {
 }
 
 // UpdateFavorite handles PUT /users/{user_id}/favorites/{favorite_id}
-func (h *UserHandler) UpdateFavorite(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
-    userID := vars["user_id"]  // You might need this for context
+    userID := vars["user_id"]   
     favoriteID := vars["favorite_id"]
     if userID == "" || favoriteID == "" {
         RespondWithError(w, http.StatusBadRequest, "Missing user_id or favorite_id")
@@ -252,7 +252,7 @@ func (h *UserHandler) UpdateFavorite(w http.ResponseWriter, r *http.Request) {
 }
 
 // DeleteFavorite handles DELETE /users/{user_id}/favorites/{favorite_id}
-func (h *UserHandler) DeleteFavorite(w http.ResponseWriter, r *http.Request) {
+func (h *UserProductHandler) DeleteFavorite(w http.ResponseWriter, r *http.Request) {
     vars := mux.Vars(r)
     userID := vars["user_id"]  //  May need this
     favoriteID := vars["favorite_id"]
@@ -265,6 +265,129 @@ func (h *UserHandler) DeleteFavorite(w http.ResponseWriter, r *http.Request) {
     defer cancel()
 
     _, err := h.UserProductClient.Client.DeleteFavoriteById(ctx, grpcReq) // Corrected
+    if err != nil{
+        RespondGrpcError(w, err)
+        return
+    }
+    RespondWithJSON(w, http.StatusOK, map[string]bool{"success": true})
+}
+
+// GetPocketsByUserId handles GET /users/{user_id}/pockets
+func (h *UserProductHandler) GetPocketsByUserId(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userID := vars["user_id"]
+	if userID == "" {
+		RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		return
+	}
+
+	grpcReq := &pb.GetPocketsByUserIdRequest{UserId: userID}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	grpcResp, err := h.UserProductClient.Client.GetPocketsByUserId(ctx, grpcReq)
+	if err != nil {
+		RespondGrpcError(w, err)
+		return
+	}
+
+	httpResp := transformers.ToPocketListJSON(grpcResp.GetPockets())
+	RespondWithJSON(w, http.StatusOK, httpResp)
+}
+
+// CreatePocket handles POST /users/{user_id}/pockets
+func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    userID := vars["user_id"]
+    if userID == "" {
+        RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+        return
+    }
+
+    var reqBody struct {
+        Name           string `json:"name"`
+        Category       string `json:"category"`
+        MaxAmount      int32 `json:"max_amount"`
+    }
+
+    if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+        RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        return
+    }
+
+    grpcReq := &pb.CreatePocketRequest{
+        UserId:         userID,  // Use user_id from path
+        Name:           reqBody.Name,
+        Category:       reqBody.Alias,
+        MaxAmount:      reqBody.MaxAmount
+    }
+
+    ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+    defer cancel()
+
+    grpcResp, err := h.UserProductClient.Client.CreatePocket(ctx, grpcReq)
+    if err != nil {
+        RespondGrpcError(w, err)
+        return
+    }
+    httpResp := transformers.ToPocketJSON(grpcResp)  // Create this in transformers
+    RespondWithJSON(w, http.StatusCreated, httpResp)
+}
+
+// UpdatePocket handles PUT /users/{user_id}/pockets/{pocket_id}
+func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    userID := vars["user_id"]   
+    pocketID := vars["pocket_id"]
+    if userID == "" || pocketID == "" {
+        RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
+        return
+    }
+
+    var reqBody struct {
+        Name           string `json:"name"`
+        Category       string `json:"category"`
+        MaxAmount      int32  `json:"max_amount"`
+    }
+    if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+        RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        return
+    }
+
+    grpcReq := &pb.UpdatePocketByIdRequest{
+        Id:             pocketID,  
+        Name:           reqBody.Name,
+        Category:       reqBody.Alias,
+        MaxAmount:      reqBody.MaxAmount
+    }
+
+    ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+    defer cancel()
+
+    grpcResp, err := h.UserProductClient.Client.UpdatePocketById(ctx, grpcReq)
+    if err != nil {
+        RespondGrpcError(w, err)
+        return
+    }
+
+    httpResp := transformers.ToPocketJSON(grpcResp) // Create this
+    RespondWithJSON(w, http.StatusOK, httpResp)
+}
+
+// DeletePocket handles DELETE /users/{user_id}/pockets/{pocket_id}
+func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request) {
+    vars := mux.Vars(r)
+    userID := vars["user_id"]  //  May need this
+    pocketID := vars["pocket_id"]
+    if userID == "" || pocketID == ""{
+        RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
+        return
+    }
+    grpcReq := &pb.DeletePocketByIdRequest{Id: pocketID}  
+    ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+    defer cancel()
+
+    _, err := h.UserProductClient.Client.DeletePocketById(ctx, grpcReq) 
     if err != nil{
         RespondGrpcError(w, err)
         return
