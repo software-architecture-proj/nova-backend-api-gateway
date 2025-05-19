@@ -13,27 +13,40 @@ import (
 
 	"github.com/software-architecture-proj/nova-backend-api-gateway/config"
 
-    // @trigger: Will be implemented later. 
-	//"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
-	//"github.com/software-architecture-proj/nova-backend-api-gateway/internal/handlers"
+	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
+	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/handlers"
 )
 
 func main() {
 	cfg := config.LoadConfig()
 
+    // Create a gRPC client for the UserProductService.
+	userProductClient, err := clients.NewUserProductServiceClient(cfg.UserProductServiceGRPCHost)
+	if err != nil {
+		log.Fatalf("Failed to create UserProductServiceClient: %v", err) //  Critical
+	}
+	defer userProductClient.CloseConnection() // Ensure connection is closed when main exits.
+
 	// Set up HTTP router
 	router := mux.NewRouter()
     
-    // @trigger: Also will be implemented later.
     // Initialize HTTP handlers
-	//userHandler := handlers.NewUserHandler(userProductClient)
+	userProductHandler := handlers.NewUserProductHandler(userProductClient)
 	// ... initialize other handlers (e.g., productHandler, accountHandler)
 
-	// Define API Gateway endpoints
-	//router.HandleFunc("/users", userHandler.CreateUser).Methods("POST")
-	// router.HandleFunc("/users/{user_id}", userHandler.GetUser).Methods("GET")
-	// router.HandleFunc("/products", productHandler.CreateProduct).Methods("POST")
-	// ... add more routes for other services/methods
+    // User and Products routes
+	userRouter.HandleFunc("", userProductHandler.CreateUser).Methods(http.MethodPost)
+	userRouter.HandleFunc("/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut) // Corrected to PUT
+	userRouter.HandleFunc("/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
+	userRouter.HandleFunc("/{user_id}/favorites", userProductHandler.GetFavoritesByUserId).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{user_id}/favorites", userProductHandler.CreateFavorite).Methods(http.MethodPost)
+	userRouter.HandleFunc("/{user_id}/favorites/{favorite_id}", userProductHandler.UpdateFavorite).Methods(http.MethodPut) // corrected
+	userRouter.HandleFunc("/{user_id}/favorites/{favorite_id}", userProductHandler.DeleteFavorite).Methods(http.MethodDelete)
+	userRouter.HandleFunc("/{user_id}/pockets", userProductHandler.GetPocketsByUserId).Methods(http.MethodGet)
+	userRouter.HandleFunc("/{user_id}/pockets", userProductHandler.CreatePocket).Methods(http.MethodPost)
+	userRouter.HandleFunc("/{user_id}/pockets/{pocket_id}", userProductHandler.UpdatePocketById).Methods(http.MethodPut) // Corrected
+	userRouter.HandleFunc("/{user_id}/pockets/{pocket_id}", userProductHandler.DeletePocketById).Methods(http.MethodDelete)
 
 	// Create HTTP server
 	server := &http.Server{

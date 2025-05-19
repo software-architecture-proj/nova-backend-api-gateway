@@ -307,7 +307,7 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
     var reqBody struct {
         Name           string `json:"name"`
         Category       string `json:"category"`
-        MaxAmount      int32 `json:"max_amount"`
+        MaxAmount      int32  `json:"max_amount"`
     }
 
     if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
