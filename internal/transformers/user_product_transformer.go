@@ -1,58 +1,170 @@
-
 package transformers
 
-import (
-	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/user_product_service" 
-)
+import pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/user_product_service"
 
-// ToUserJSON transforms a gRPC User object to a JSON-friendly structure.
-func ToUserJSON(user *pb.User) map[string]interface{} {
+func CreateUserRespJSON(resp *pb.CreateUserResponse) map[string]interface{} {
 	return map[string]interface{}{
-		"id":         user.GetId(),
-		"email":      user.GetEmail(),
-		"username":   user.GetUsername(),
-		"phone":      user.GetPhone(),
-		"firstName":  user.GetFirstName(),
-		"lastName":   user.GetLastName(),
-		"birthdate":  user.GetBirthdate(),
+		"success": resp.GetSuccess(),
+		"message": resp.GetMessage(),
+		"user_id": resp.GetUserId(),
 	}
 }
 
-// ToFavoriteJSON transforms a gRPC Favorite object to a JSON-friendly structure
-func ToFavoriteJSON(favorite *pb.Favorite) map[string]interface{} {
+func GetUserRespJSON(resp *pb.GetUserByIdResponse) map[string]interface{} {
 	return map[string]interface{}{
-		"id":               favorite.GetId(),
-		"user_id":          favorite.GetUserId(),
-		"favorite_user_id": favorite.GetFavoriteUserId(),
-		"alias":            favorite.GetAlias(),
+		"success":     resp.GetSuccess(),
+		"message":     resp.GetMessage(),
+		"email":       resp.GetEmail(),
+		"username":    resp.GetUsername(),
+		"phone":       resp.GetPhone(),
+		"first_name":  resp.GetFirstName(),
+		"last_name":   resp.GetLastName(),
+		"birthdate":   resp.GetBirthdate(),
 	}
 }
 
-// ToFavoriteListJSON transforms a slice of gRPC Favorite objects to a JSON-friendly structure.
-func ToFavoriteListJSON(favorites []*pb.Favorite) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(favorites))
-	for i, fav := range favorites {
-		result[i] = ToFavoriteJSON(fav)
-	}
-	return result
-}
-
-// ToPocketJSON transforms a gRPC Pocket object to a JSON-friendly structure.
-func ToPocketJSON(pocket *pb.Pocket) map[string]interface{} {
+func UpdateUserRespJSON(resp *pb.UpdateUserByIdResponse) map[string]interface{} {
 	return map[string]interface{}{
-		"id":          pocket.GetId(),
-		"user_id":     pocket.GetUserId(),
-        "name":        pocket.GetName(),
-		"category":    pocket.GetCategory(),
-		"max_amount":  pocket.GetMaxAmount(),
+		"success":     resp.GetSuccess(),
+		"message":     resp.GetMessage(),
+		"email":       resp.GetEmail(),
+		"username":    resp.GetUsername(),
+		"phone":       resp.GetPhone(),
+		"first_name":  resp.GetFirstName(),
+		"last_name":   resp.GetLastName(),
+		"birthdate":   resp.GetBirthdate(),
 	}
 }
 
-// ToPocketListJSON transforms a slice of gRPC Pocket objects to a JSON-friendly structure.
-func ToPocketListJSON(pockets []*pb.Pocket) []map[string]interface{} {
-	result := make([]map[string]interface{}, len(pockets))
-	for i, pocket := range pockets {
-		result[i] = ToPocketJSON(pocket)
+func DeleteUserRespJSON(resp *pb.DeleteUserByIdResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success": resp.GetSuccess(),
+		"message": resp.GetMessage(),
 	}
-	return result
+}
+
+func GetFavoritesRespJSON(resp *pb.GetFavoritesByUserIdResponse) map[string]interface{} {
+	var favorites []map[string]interface{}
+	for _, f := range resp.GetFavorites() {
+		favorites = append(favorites, map[string]interface{}{
+			"id":                f.GetId(),
+			"user_id":           f.GetUserId(),
+			"favorite_user_id":  f.GetFavoriteUserId(),
+			"favorite_username": f.GetFavoriteUsername(),
+			"alias":             f.GetAlias(),
+		})
+	}
+	return map[string]interface{}{
+		"success":   resp.GetSuccess(),
+		"message":   resp.GetMessage(),
+		"favorites": favorites,
+	}
+}
+
+func CreateFavoriteRespJSON(resp *pb.CreateFavoriteResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success":     resp.GetSuccess(),
+		"message":     resp.GetMessage(),
+		"favorite_id": resp.GetFavoriteId(),
+	}
+}
+
+func UpdateFavoriteRespJSON(resp *pb.UpdateFavoriteByIdResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success":    resp.GetSuccess(),
+		"message":    resp.GetMessage(),
+		"new_alias":  resp.GetNewAlias(),
+	}
+}
+
+func DeleteFavoriteRespJSON(resp *pb.DeleteFavoriteByIdResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success": resp.GetSuccess(),
+		"message": resp.GetMessage(),
+	}
+}
+
+func GetPocketsRespJSON(resp *pb.GetPocketsByUserIdResponse) map[string]interface{} {
+	var pockets []map[string]interface{}
+	for _, p := range resp.GetPockets() {
+		pockets = append(pockets, map[string]interface{}{
+			"id":         p.GetId(),
+			"user_id":    p.GetUserId(),
+			"name":       p.GetName(),
+			"category":   p.GetCategory(),
+			"max_amount": p.GetMaxAmount(),
+		})
+	}
+	return map[string]interface{}{
+		"success": resp.GetSuccess(),
+		"message": resp.GetMessage(),
+		"pockets": pockets,
+	}
+}
+
+func CreatePocketRespJSON(resp *pb.CreatePocketResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success":    resp.GetSuccess(),
+		"message":    resp.GetMessage(),
+		"pocket_id":  resp.GetPocketId(),
+	}
+}
+
+func UpdatePocketRespJSON(resp *pb.UpdatePocketByIdResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success":    resp.GetSuccess(),
+		"message":    resp.GetMessage(),
+		"name":       resp.GetName(),
+		"category":   resp.GetCategory(),
+		"max_amount": resp.GetMaxAmount(),
+	}
+}
+
+func DeletePocketRespJSON(resp *pb.DeletePocketByIdResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success": resp.GetSuccess(),
+		"message": resp.GetMessage(),
+	}
+}
+
+func GetVerificationsRespJSON(resp *pb.GetVerificationsByUserIdResponse) map[string]interface{} {
+	var verifications []map[string]interface{}
+	for _, v := range resp.GetVerifications() {
+		verifications = append(verifications, map[string]interface{}{
+			"id":       v.GetId(),
+			"user_id":  v.GetUserId(),
+			"type":     v.GetType(),
+			"status":   v.GetStatus(),
+		})
+	}
+	return map[string]interface{}{
+		"success":       resp.GetSuccess(),
+		"message":       resp.GetMessage(),
+		"verifications": verifications,
+	}
+}
+
+func UpdateVerificationRespJSON(resp *pb.UpdateVerificationByUserIdResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success": resp.GetSuccess(),
+		"message": resp.GetMessage(),
+		"type":    resp.GetType(),
+		"status":  resp.GetStatus(),
+	}
+}
+
+func GetCountryCodesRespJSON(resp *pb.GetCountryCodesResponse) map[string]interface{} {
+	var codes []map[string]interface{}
+	for _, c := range resp.GetCountryCodes() {
+		codes = append(codes, map[string]interface{}{
+			"id":      c.GetId(),
+			"name":    c.GetName(),
+			"code":    c.GetCode(),
+		})
+	}
+	return map[string]interface{}{
+		"success":       resp.GetSuccess(),
+		"message":       resp.GetMessage(),
+		"country_codes": codes,
+	}
 }
