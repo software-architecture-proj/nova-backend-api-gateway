@@ -30,6 +30,7 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 	var reqBody struct {
 		Email     string `json:"email"`
 		Username  string `json:"username"`
+        CodeId    string `json:"code_id"`
 		Phone     string `json:"phone"`
 		FirstName string `json:"first_name"`
 		LastName  string `json:"last_name"`
@@ -44,6 +45,7 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 	grpcReq := &pb.CreateUserRequest{
 		Email:     reqBody.Email,
 		Username:  reqBody.Username,
+        CodeId:    reqBody.CodeId,
 		Phone:     reqBody.Phone,
 		FirstName: reqBody.FirstName,
 		LastName:  reqBody.LastName,
@@ -60,7 +62,7 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	// Assuming you have a transformer function to convert the gRPC response to a suitable HTTP response
-	httpResp := transformers.ToUserJSON(grpcResp) //  Create this function in transformers.go
+	httpResp := transformers.CreateUserRespJSON(grpcResp) //  Create this function in transformers.go
 	RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
@@ -83,7 +85,7 @@ func (h *UserProductHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpResp := transformers.ToUserJSON(grpcResp) // Create this function in transformers.go
+	httpResp := transformers.GetUserRespJSON(grpcResp) // Create this function in transformers.go
 	RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
@@ -129,7 +131,7 @@ func (h *UserProductHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	httpResp := transformers.ToUserJSON(grpcResp) // Create this function in transformers.go
+	httpResp := transformers.UpdateUserRespJSON(grpcResp) // Create this function in transformers.go
 	RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
@@ -146,13 +148,14 @@ func (h *UserProductHandler) DeleteUser(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	_, err := h.UserProductClient.Client.DeleteUserById(ctx, grpcReq) // Corrected method.  Check the return.
+	grcpResp, err := h.UserProductClient.Client.DeleteUserById(ctx, grpcReq) // Corrected method.  Check the return.
 	if err != nil {
 		RespondGrpcError(w, err)
 		return
 	}
-
-	RespondWithJSON(w, http.StatusOK, map[string]bool{"success": true}) //  Successful deletion
+    
+	httpResp := transformers.DeleteUserRespJSON(grpcResp) // Create this function in transformers.go
+	RespondWithJSON(w, http.StatusOK, httpResp) 
 }
 
 // GetFavoritesByUserId handles GET /users/{user_id}/favorites
@@ -174,7 +177,7 @@ func (h *UserProductHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http
 		return
 	}
 
-	httpResp := transformers.ToFavoriteListJSON(grpcResp.GetFavorites()) //  Create this in transformers.go
+	httpResp := transformers.GetFavoritesRespJSON(grpcResp) //  Create this in transformers.go
 	RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
@@ -211,7 +214,7 @@ func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Reque
         RespondGrpcError(w, err)
         return
     }
-    httpResp := transformers.ToFavoriteJSON(grpcResp)  // Create this in transformers
+    httpResp := transformers.CreateFavoriteRespJSON(grpcResp)  // Create this in transformers
     RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
@@ -247,7 +250,7 @@ func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Reque
         return
     }
 
-    httpResp := transformers.ToFavoriteJSON(grpcResp) // Create this
+    httpResp := transformers.UpdateFavoriteRespJSON(grpcResp) // Create this
     RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
@@ -264,12 +267,13 @@ func (h *UserProductHandler) DeleteFavorite(w http.ResponseWriter, r *http.Reque
     ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
     defer cancel()
 
-    _, err := h.UserProductClient.Client.DeleteFavoriteById(ctx, grpcReq) // Corrected
+    grpcResp, err := h.UserProductClient.Client.DeleteFavoriteById(ctx, grpcReq) // Corrected
     if err != nil{
         RespondGrpcError(w, err)
         return
     }
-    RespondWithJSON(w, http.StatusOK, map[string]bool{"success": true})
+	httpResp := transformers.DeleteFavoriteRespJSON(grpcResp) // Create this function in transformers.go
+	RespondWithJSON(w, http.StatusOK, httpResp) 
 }
 
 // GetPocketsByUserId handles GET /users/{user_id}/pockets
@@ -291,7 +295,7 @@ func (h *UserProductHandler) GetPocketsByUserId(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	httpResp := transformers.ToPocketListJSON(grpcResp.GetPockets())
+	httpResp := transformers.GetPocketsRespJSON(grpcResp)
 	RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
@@ -330,7 +334,7 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
         RespondGrpcError(w, err)
         return
     }
-    httpResp := transformers.ToPocketJSON(grpcResp)  // Create this in transformers
+    httpResp := transformers.CreatePocketRespJSON(grpcResp)  // Create this in transformers
     RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
@@ -370,7 +374,7 @@ func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request
         return
     }
 
-    httpResp := transformers.ToPocketJSON(grpcResp) // Create this
+    httpResp := transformers.UpdatePocketRespJSON(grpcResp) // Create this
     RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
@@ -387,10 +391,12 @@ func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request
     ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
     defer cancel()
 
-    _, err := h.UserProductClient.Client.DeletePocketById(ctx, grpcReq) 
+    grpcResp, err := h.UserProductClient.Client.DeletePocketById(ctx, grpcReq) 
     if err != nil{
         RespondGrpcError(w, err)
         return
     }
-    RespondWithJSON(w, http.StatusOK, map[string]bool{"success": true})
+
+	httpResp := transformers.DeletePocketRespJSON(grpcResp) // Create this function in transformers.go
+	RespondWithJSON(w, http.StatusOK, httpResp) 
 }
