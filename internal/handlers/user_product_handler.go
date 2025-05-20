@@ -25,6 +25,21 @@ func NewUserProductHandler(userProductClient *clients.UserProductServiceClient) 
 	return &UserProductHandler{UserProductClient: userProductClient}
 }
 
+// GetCountryCodes handles GET /country-codes
+func (h *UserProductHandler) GetCountryCodes(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	grpcResp, err := h.UserProductClient.Client.GetCountryCodes(ctx, &pb.GetCountryCodesRequest{})
+	if err != nil {
+		common.RespondGrpcError(w, err)
+		return
+	}
+
+	httpResp := transformers.GetCountryCodesRespJSON(grpcResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
+}
+
 // CreateUser handles POST /users
 func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var reqBody struct {

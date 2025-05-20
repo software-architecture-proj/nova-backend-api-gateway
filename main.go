@@ -29,24 +29,26 @@ func main() {
 
 	// Set up HTTP router
 	router := mux.NewRouter()
+    apiRouter := router.PathPrefix("/api").Subrouter()
     
     // Initialize HTTP handlers
 	userProductHandler := handlers.NewUserProductHandler(userProductClient)
 	// ... initialize other handlers (e.g., productHandler, accountHandler)
 
     // User and Products routes
-	router.HandleFunc("", userProductHandler.CreateUser).Methods(http.MethodPost)
-	router.HandleFunc("/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
-	router.HandleFunc("/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut) // Corrected to PUT
-	router.HandleFunc("/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
-	router.HandleFunc("/{user_id}/favorites", userProductHandler.GetFavoritesByUserId).Methods(http.MethodGet)
-	router.HandleFunc("/{user_id}/favorites", userProductHandler.CreateFavorite).Methods(http.MethodPost)
-	router.HandleFunc("/{user_id}/favorites/{favorite_id}", userProductHandler.UpdateFavorite).Methods(http.MethodPut) // corrected
-	router.HandleFunc("/{user_id}/favorites/{favorite_id}", userProductHandler.DeleteFavorite).Methods(http.MethodDelete)
-	router.HandleFunc("/{user_id}/pockets", userProductHandler.GetPocketsByUserId).Methods(http.MethodGet)
-	router.HandleFunc("/{user_id}/pockets", userProductHandler.CreatePocket).Methods(http.MethodPost)
-	router.HandleFunc("/{user_id}/pockets/{pocket_id}", userProductHandler.UpdatePocketById).Methods(http.MethodPut) // Corrected
-	router.HandleFunc("/{user_id}/pockets/{pocket_id}", userProductHandler.DeletePocketById).Methods(http.MethodDelete)
+	apiRouter.HandleFunc("/country-codes", userProductHandler.GetCountryCodes).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/users", userProductHandler.CreateUser).Methods(http.MethodPost)
+	apiRouter.HandleFunc("users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut) // Corrected to PUT
+	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
+	apiRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.GetFavoritesByUserId).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.CreateFavorite).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.UpdateFavorite).Methods(http.MethodPut) // corrected
+	apiRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.DeleteFavorite).Methods(http.MethodDelete)
+	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.GetPocketsByUserId).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.CreatePocket).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.UpdatePocket).Methods(http.MethodPut) // Corrected
+	apiRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.DeletePocketById).Methods(http.MethodDelete)
 
 	// Create HTTP server
 	server := &http.Server{
