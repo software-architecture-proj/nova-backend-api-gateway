@@ -155,7 +155,7 @@ func UpdateVerificationRespJSON(resp *pb.UpdateVerificationByUserIdResponse) map
 
 func GetCountryCodesRespJSON(resp *pb.GetCountryCodesResponse) map[string]interface{} {
 	var codes []map[string]interface{}
-	for _, c := range resp.GetCountryCodes() {
+	for _, c := range resp.GetCodes() {
 		codes = append(codes, map[string]interface{}{
 			"id":      c.GetId(),
 			"name":    c.GetName(),
