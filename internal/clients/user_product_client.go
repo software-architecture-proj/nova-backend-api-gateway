@@ -15,7 +15,7 @@ type UserProductServiceClient struct {
 }
 
 func NewUserProductServiceClient(grpcHost string) (*UserProductServiceClient, error) {
-	conn, err := grpc.Dial(grpcHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(grpcHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Printf("did not connect to UserProductService: %v", err)
 		return nil, err

@@ -20,22 +20,36 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-    // Create a gRPC client for the UserProductService.
+	// Create a gRPC client for each Service.
 	userProductClient, err := clients.NewUserProductServiceClient(cfg.UserProductServiceGRPCHost)
 	if err != nil {
 		log.Fatalf("Failed to create UserProductServiceClient: %v", err) //  Critical
 	}
 	defer userProductClient.CloseConnection() // Ensure connection is closed when main exits.
 
+	AuthClient, err := clients.NewAuthServiceClient(cfg.AuthServiceGRPCHost)
+	if err != nil {
+		log.Fatalf("Failed to create AuthServiceClient: %v", err) //  Critical
+	}
+	defer AuthClient.CloseConnection() // Fixed: was using wrong client
+
+	TransactionClient, err := clients.NewTransactionServiceClient(cfg.TransactionServiceGRPCHost)
+	if err != nil {
+		log.Fatalf("Failed to create TransactionServiceClient: %v", err) //  Critical
+	}
+	defer TransactionClient.CloseConnection() // Fixed: was using wrong client
+
 	// Set up HTTP router
 	router := mux.NewRouter()
-    apiRouter := router.PathPrefix("/api").Subrouter()
-    
-    // Initialize HTTP handlers
+	apiRouter := router.PathPrefix("/api").Subrouter()
+
+	// Initialize HTTP handlers
 	userProductHandler := handlers.NewUserProductHandler(userProductClient)
+	AuthHandler := handlers.NewAuthHandler(AuthClient)
+	TransactionHandler := handlers.NewTransactionHandler(TransactionClient)
 	// ... initialize other handlers (e.g., productHandler, accountHandler)
 
-    // User and Products routes
+	// User and Products routes
 	apiRouter.HandleFunc("/country-codes", userProductHandler.GetCountryCodes).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users", userProductHandler.CreateUser).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
@@ -57,6 +71,15 @@ func main() {
 	// Verification routes
 	apiRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.GetVerificationsByUserId).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.UpdateVerificationByUserId).Methods(http.MethodPut)
+
+	// Auth routes
+	apiRouter.HandleFunc("/login", AuthHandler.PostLogin).Methods(http.MethodPost)
+
+	// Transaction routes
+	apiRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/transfers", TransactionHandler.PostTransfer).Methods(http.MethodPost) // Fixed: was using wrong handler method
+	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
 
 	// Create HTTP server
 	server := &http.Server{

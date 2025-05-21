@@ -1,66 +1,52 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
+	"time"
 
-	"github.com/software-architecture-proj/nova-backend-auth-service/client"
-	"github.com/software-architecture-proj/nova-backend-auth-service/transformer"
+	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
+	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/common"
+	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/transformers"
+
+	// Import from common-protos
+	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 )
 
-// Handler contains all the HTTP handlers and their dependencies
-type Handler struct {
-	authClient *client.AuthClient
+type AuthHandler struct {
+	AuthClient *clients.AuthServiceClient
 }
 
-// NewHandler creates a new Handler instance
-func NewHandler(authClient *client.AuthClient) *Handler {
-	return &Handler{
-		authClient: authClient,
+func NewAuthHandler(AuthClient *clients.AuthServiceClient) *AuthHandler {
+	return &AuthHandler{AuthClient: AuthClient}
+}
+
+// Login
+func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
+	var reqBody struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
-}
 
-// LoginRequest represents the HTTP request body for login
-type LoginRequest struct {
-	Email    string `json:"email"`
-	Password string `json:"password"`
-}
-
-// LoginResponse represents the HTTP response for login
-type LoginResponse struct {
-	Success bool   `json:"success"`
-	Message string `json:"message"`
-	Email   string `json:"email"`
-}
-
-// LoginHandler handles the login HTTP request
-func (h *Handler) LoginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
-	// Parse request body
-	var httpReq transformer.HTTPLoginRequest
-	if err := json.NewDecoder(r.Body).Decode(&httpReq); err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+	if reqBody.Email == "" {
+		common.RespondWithError(w, http.StatusBadRequest, "Missing email")
 		return
 	}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
 
-	// Transform HTTP request to gRPC request
-	grpcReq := transformer.ToGRPCLoginRequest(&httpReq)
-
-	// Call gRPC service
-	grpcResp, err := h.authClient.LoginUser(r.Context(), grpcReq)
+	grpcResp, err := h.AuthClient.Client.LoginUser(ctx, &pb.LoginRequest{Email: reqBody.Email, Password: reqBody.Password})
 	if err != nil {
-		http.Error(w, "Login failed", http.StatusInternalServerError)
+		common.RespondGrpcError(w, err)
 		return
 	}
 
-	// Transform gRPC response to HTTP response
-	httpResp := transformer.ToHTTPLoginResponse(grpcResp)
-
-	// Send response
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(httpResp)
+	httpResp := transformers.LoginRespJSON(grpcResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
