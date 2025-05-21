@@ -25,35 +25,43 @@ func NewTransactionHandler(TransactionClient *clients.TransactionServiceClient) 
 
 // GetMovements handles GET /movements
 func (h *TransactionHandler) GetMovements(w http.ResponseWriter, r *http.Request) {
-	var reqBody struct {
-		User_id   string `json:"user_id"`
-		From_time string `json:"from_time"`
-		To_time   string `json:"to_time"`
-		Limit     bool   `json:"limit"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+	if r.Method != http.MethodGet {
+		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	if reqBody.User_id == "" {
+	query := r.URL.Query()
+	userId := query.Get("user_id")
+	fromTimeStr := query.Get("from_time")
+	toTimeStr := query.Get("to_time")
+	limitStr := query.Get("limit")
+
+	if userId == "" {
 		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
-	fromTime, err := strconv.ParseUint(reqBody.From_time, 10, 64)
+	fromTime, err := strconv.ParseUint(fromTimeStr, 10, 64)
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'from' time format")
 		return
 	}
-	toTime, err := strconv.ParseUint(reqBody.To_time, 10, 64)
+	toTime, err := strconv.ParseUint(toTimeStr, 10, 64)
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'to' time format")
 		return
 	}
 
-	grpcReq := &pb.GetMovementsRequest{UserId: reqBody.User_id, FromTime: fromTime, ToTime: toTime, Limit: reqBody.Limit}
+	limit := false
+	if limitStr != "" {
+		limit, err = strconv.ParseBool(limitStr)
+		if err != nil {
+			common.RespondWithError(w, http.StatusBadRequest, "Invalid limit format")
+			return
+		}
+	}
+
+	grpcReq := &pb.GetMovementsRequest{UserId: userId, FromTime: fromTime, ToTime: toTime, Limit: limit}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 	grpcResp, err := h.TransactionClient.Client.Movements(ctx, grpcReq)
@@ -66,8 +74,13 @@ func (h *TransactionHandler) GetMovements(w http.ResponseWriter, r *http.Request
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
-// PostAccount CreateUser handles POST /account
+// PostAccount handles POST /account
 func (h *TransactionHandler) PostAccount(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
 	var reqBody struct {
 		Username string `json:"username"`
 		Bank     bool   `json:"bank"`
@@ -94,41 +107,39 @@ func (h *TransactionHandler) PostAccount(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	// Assuming you have a transformer function to convert the gRPC response to a suitable HTTP response
-	httpResp := transformers.CreateAccountRespJSON(grpcResp) //  Create this function in transformers.go
+	httpResp := transformers.CreateAccountRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
 // GetBalance handles GET /balance
 func (h *TransactionHandler) GetBalance(w http.ResponseWriter, r *http.Request) {
-	var reqBody struct {
-		User_id   string `json:"user_id"`
-		From_time string `json:"from_time"`
-		To_time   string `json:"to_time"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+	if r.Method != http.MethodGet {
+		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 
-	if reqBody.User_id == "" {
+	query := r.URL.Query()
+	userId := query.Get("user_id")
+	fromTimeStr := query.Get("from_time")
+	toTimeStr := query.Get("to_time")
+
+	if userId == "" {
 		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
-	fromTime, err := strconv.ParseUint(reqBody.From_time, 10, 64)
+	fromTime, err := strconv.ParseUint(fromTimeStr, 10, 64)
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'from' time format")
 		return
 	}
-	toTime, err := strconv.ParseUint(reqBody.To_time, 10, 64)
+	toTime, err := strconv.ParseUint(toTimeStr, 10, 64)
 	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'to' time format")
 		return
 	}
 
-	grpcReq := &pb.GetBalanceRequest{UserId: reqBody.User_id, FromTime: fromTime, ToTime: toTime}
+	grpcReq := &pb.GetBalanceRequest{UserId: userId, FromTime: fromTime, ToTime: toTime}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
@@ -138,12 +149,17 @@ func (h *TransactionHandler) GetBalance(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	httpResp := transformers.GetBalanceRespJSON(grpcResp) // Create this function in transformers.go
+	httpResp := transformers.GetBalanceRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // PostTransfer handles POST /transfer
 func (h *TransactionHandler) PostTransfer(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
 	var reqBody struct {
 		FromUser string `json:"from_user"`
 		ToUser   string `json:"to_user"`
@@ -170,7 +186,6 @@ func (h *TransactionHandler) PostTransfer(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	// Assuming you have a transformer function to convert the gRPC response to a suitable HTTP response
-	httpResp := transformers.TransferFundsRespJSON(grpcResp) //  Create this function in transformers.go
+	httpResp := transformers.TransferFundsRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
 }

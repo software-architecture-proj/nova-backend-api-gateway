@@ -6,5 +6,6 @@ func LoginRespJSON(resp *pb.LoginResponse) map[string]interface{} {
 	return map[string]interface{}{
 		"success": resp.GetSuccess(),
 		"message": resp.GetMessage(),
+		"email":   resp.GetEmail(),
 	}
 }
