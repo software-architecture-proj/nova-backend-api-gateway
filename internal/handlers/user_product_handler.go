@@ -338,7 +338,7 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
         UserId:         userID,  // Use user_id from path
         Name:           reqBody.Name,
         Category:       reqBody.Alias,
-        MaxAmount:      reqBody.MaxAmount
+        MaxAmount:      reqBody.MaxAmount,
     }
 
     ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
@@ -377,7 +377,7 @@ func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request
         Id:             pocketID,  
         Name:           reqBody.Name,
         Category:       reqBody.Alias,
-        MaxAmount:      reqBody.MaxAmount
+        MaxAmount:      reqBody.MaxAmount,
     }
 
     ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
