@@ -220,13 +220,10 @@ func (h *UserProductHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http
 
 // CreateFavorite handles POST /users/{user_id}/favorites
 func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 	if r.Method != http.MethodPost {
 		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
-=======
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
@@ -245,11 +242,7 @@ func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Reque
 	}
 
 	grpcReq := &pb.CreateFavoriteRequest{
-<<<<<<< HEAD
 		UserId:         userID,  // Use user_id from path
-=======
-		UserId:         userID, // Use user_id from path
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 		FavoriteUserId: reqBody.FavoriteUserId,
 		Alias:          reqBody.Alias,
 	}
@@ -262,27 +255,19 @@ func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Reque
 		common.RespondGrpcError(w, err)
 		return
 	}
-<<<<<<< HEAD
-	httpResp := transformers.CreateFavoriteRespJSON(grpcResp)  // Create this in transformers
-=======
-	httpResp := transformers.CreateFavoriteRespJSON(grpcResp) // Create this in transformers
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
+
+	httpResp := transformers.CreateFavoriteRespJSON(grpcResp) // Create this function in transformers.go
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
 // UpdateFavorite handles PUT /users/{user_id}/favorites/{favorite_id}
 func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 	if r.Method != http.MethodPut {
 		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
 	}
 	vars := mux.Vars(r)
 	userID := vars["user_id"]   
-=======
-	vars := mux.Vars(r)
-	userID := vars["user_id"]
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	favoriteID := vars["favorite_id"]
 	if userID == "" || favoriteID == "" {
 		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or favorite_id")
@@ -305,11 +290,7 @@ func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Reque
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-<<<<<<< HEAD
 	grpcResp, err := h.UserProductClient.Client.UpdateFavoriteById(ctx, grpcReq)  //Corrected name
-=======
-	grpcResp, err := h.UserProductClient.Client.UpdateFavoriteById(ctx, grpcReq) //Corrected name
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	if err != nil {
 		common.RespondGrpcError(w, err)
 		return
@@ -321,7 +302,6 @@ func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Reque
 
 // DeleteFavorite handles DELETE /users/{user_id}/favorites/{favorite_id}
 func (h *UserProductHandler) DeleteFavorite(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 	if r.Method != http.MethodDelete {
 		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -340,30 +320,12 @@ func (h *UserProductHandler) DeleteFavorite(w http.ResponseWriter, r *http.Reque
 	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.DeleteFavoriteById(ctx, grpcReq)
-=======
-	vars := mux.Vars(r)
-	userID := vars["user_id"] //  May need this
-	favoriteID := vars["favorite_id"]
-	if userID == "" || favoriteID == "" {
-		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or favorite_id")
-		return
-	}
-	grpcReq := &pb.DeleteFavoriteByIdRequest{Id: favoriteID} // Corrected
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	grpcResp, err := h.UserProductClient.Client.DeleteFavoriteById(ctx, grpcReq) // Corrected
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	if err != nil {
 		common.RespondGrpcError(w, err)
 		return
 	}
-<<<<<<< HEAD
 
 	httpResp := transformers.DeleteFavoriteRespJSON(grpcResp)
-=======
-	httpResp := transformers.DeleteFavoriteRespJSON(grpcResp) // Create this function in transformers.go
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
@@ -396,7 +358,6 @@ func (h *UserProductHandler) GetPocketsByUserId(w http.ResponseWriter, r *http.R
 
 // CreatePocket handles POST /users/{user_id}/pockets
 func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 	if r.Method != http.MethodPost {
 		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -430,52 +391,18 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-=======
-	vars := mux.Vars(r)
-	userID := vars["user_id"]
-	if userID == "" {
-		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
-		return
-	}
-
-	var reqBody struct {
-		Name      string `json:"name"`
-		Category  string `json:"category"`
-		MaxAmount int32  `json:"max_amount"`
-	}
-
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-
-	grpcReq := &pb.CreatePocketRequest{
-		UserId:    userID, // Use user_id from path
-		Name:      reqBody.Name,
-		Category:  reqBody.Category,
-		MaxAmount: reqBody.MaxAmount,
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	grpcResp, err := h.UserProductClient.Client.CreatePocket(ctx, grpcReq)
 	if err != nil {
 		common.RespondGrpcError(w, err)
 		return
 	}
-<<<<<<< HEAD
+
 	httpResp := transformers.CreatePocketRespJSON(grpcResp)
-=======
-	httpResp := transformers.CreatePocketRespJSON(grpcResp) // Create this in transformers
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
 // UpdatePocket handles PUT /users/{user_id}/pockets/{pocket_id}
 func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 	if r.Method != http.MethodPut {
 		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -516,49 +443,11 @@ func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request
 	}
 
 	httpResp := transformers.UpdatePocketRespJSON(grpcResp)
-=======
-	vars := mux.Vars(r)
-	userID := vars["user_id"]
-	pocketID := vars["pocket_id"]
-	if userID == "" || pocketID == "" {
-		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
-		return
-	}
-
-	var reqBody struct {
-		Name      string `json:"name"`
-		Category  string `json:"category"`
-		MaxAmount int32  `json:"max_amount"`
-	}
-	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
-		return
-	}
-
-	grpcReq := &pb.UpdatePocketByIdRequest{
-		Id:        pocketID,
-		Name:      reqBody.Name,
-		Category:  reqBody.Category,
-		MaxAmount: reqBody.MaxAmount,
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	grpcResp, err := h.UserProductClient.Client.UpdatePocketById(ctx, grpcReq)
-	if err != nil {
-		common.RespondGrpcError(w, err)
-		return
-	}
-
-	httpResp := transformers.UpdatePocketRespJSON(grpcResp) // Create this
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // DeletePocket handles DELETE /users/{user_id}/pockets/{pocket_id}
 func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request) {
-<<<<<<< HEAD
 	if r.Method != http.MethodDelete {
 		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
 		return
@@ -583,28 +472,7 @@ func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request
 	}
 
 	httpResp := transformers.DeletePocketRespJSON(grpcResp)
-	common.RespondWithJSON(w, http.StatusOK, httpResp) 
-=======
-	vars := mux.Vars(r)
-	userID := vars["user_id"] //  May need this
-	pocketID := vars["pocket_id"]
-	if userID == "" || pocketID == "" {
-		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
-		return
-	}
-	grpcReq := &pb.DeletePocketByIdRequest{Id: pocketID}
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
-	grpcResp, err := h.UserProductClient.Client.DeletePocketById(ctx, grpcReq)
-	if err != nil {
-		common.RespondGrpcError(w, err)
-		return
-	}
-
-	httpResp := transformers.DeletePocketRespJSON(grpcResp) // Create this function in transformers.go
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
->>>>>>> a9832424e5e18ef58a600d600a1b30199fd6174b
 }
 
 // GetVerificationsByUserId handles GET /users/{user_id}/verifications
