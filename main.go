@@ -20,25 +20,39 @@ import (
 func main() {
 	cfg := config.LoadConfig()
 
-    // Create a gRPC client for the UserProductService.
+	// Create a gRPC client for each Service.
 	userProductClient, err := clients.NewUserProductServiceClient(cfg.UserProductServiceGRPCHost)
 	if err != nil {
 		log.Fatalf("Failed to create UserProductServiceClient: %v", err) //  Critical
 	}
 	defer userProductClient.CloseConnection() // Ensure connection is closed when main exits.
 
+	AuthClient, err := clients.NewAuthServiceClient(cfg.AuthServiceGRPCHost)
+	if err != nil {
+		log.Fatalf("Failed to create AuthServiceClient: %v", err) //  Critical
+	}
+	defer userProductClient.CloseConnection() // Ensure connection is closed when main exits.
+
+	TransactionClient, err := clients.NewTransactionServiceClient(cfg.TransactionServiceGRPCHost)
+	if err != nil {
+		log.Fatalf("Failed to create TransactionServiceClient: %v", err) //  Critical
+	}
+	defer userProductClient.CloseConnection() // Ensure connection is closed when main exits.
+
 	// Set up HTTP router
 	router := mux.NewRouter()
-    apiRouter := router.PathPrefix("/api").Subrouter()
-    
-    // Initialize HTTP handlers
+	apiRouter := router.PathPrefix("/api").Subrouter()
+
+	// Initialize HTTP handlers
 	userProductHandler := handlers.NewUserProductHandler(userProductClient)
+	AuthHandler := handlers.NewAuthHandler(AuthClient)
+	TransactionHandler := handlers.NewTransactionHandler(TransactionClient)
 	// ... initialize other handlers (e.g., productHandler, accountHandler)
 
-    // User and Products routes
+	// User and Products routes
 	apiRouter.HandleFunc("/country-codes", userProductHandler.GetCountryCodes).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users", userProductHandler.CreateUser).Methods(http.MethodPost)
-	apiRouter.HandleFunc("users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut) // Corrected to PUT
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
 	apiRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.GetFavoritesByUserId).Methods(http.MethodGet)
@@ -48,11 +62,20 @@ func main() {
 	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.GetPocketsByUserId).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.CreatePocket).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.UpdatePocket).Methods(http.MethodPut) // Corrected
-	apiRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.DeletePocketById).Methods(http.MethodDelete)
+	//apiRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.DeletePocketById).Methods(http.MethodDelete)
+
+	// Auth routes
+	apiRouter.HandleFunc("/login", AuthHandler.PostLogin).Methods(http.MethodPost)
+
+	// Transaction routes
+	apiRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/transfers", TransactionHandler.PostAccount).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
 
 	// Create HTTP server
 	server := &http.Server{
-		Addr:         ":" + cfg_str.APIGatewayPort,
+		Addr:         ":" + cfg.APIGatewayPort,
 		Handler:      router,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
