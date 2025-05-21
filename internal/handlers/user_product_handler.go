@@ -475,3 +475,74 @@ func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request
 	httpResp := transformers.DeletePocketRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp) 
 }
+
+// GetVerificationsByUserId handles GET /users/{user_id}/verifications
+func (h *UserProductHandler) GetVerificationsByUserId(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	vars := mux.Vars(r)
+	userID := vars["user_id"]
+	if userID == "" {
+		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		return
+	}
+
+	grpcReq := &pb.GetVerificationsByUserIdRequest{UserId: userID}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	grpcResp, err := h.UserProductClient.Client.GetVerificationsByUserId(ctx, grpcReq)
+	if err != nil {
+		common.RespondGrpcError(w, err)
+		return
+	}
+
+	httpResp := transformers.GetVerificationsRespJSON(grpcResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
+}
+
+// UpdateVerificationByUserId handles PUT /users/{user_id}/verifications
+func (h *UserProductHandler) UpdateVerificationByUserId(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPut {
+		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	vars := mux.Vars(r)
+	userID := vars["user_id"]
+	if userID == "" {
+		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		return
+	}
+
+	var reqBody struct {
+		Type   string `json:"type"`
+		Status string `json:"status"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
+		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		return
+	}
+
+	grpcReq := &pb.UpdateVerificationByUserIdRequest{
+		UserId: userID,
+		Type:   reqBody.Type,
+		Status: reqBody.Status,
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	defer cancel()
+
+	grpcResp, err := h.UserProductClient.Client.UpdateVerificationByUserId(ctx, grpcReq)
+	if err != nil {
+		common.RespondGrpcError(w, err)
+		return
+	}
+
+	httpResp := transformers.UpdateVerificationRespJSON(grpcResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
+}
