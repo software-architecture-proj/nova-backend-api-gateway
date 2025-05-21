@@ -53,7 +53,7 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
@@ -72,13 +72,13 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 
 	grpcResp, err := h.UserProductClient.Client.CreateUser(ctx, grpcReq)
 	if err != nil {
-		RespondGrpcError(w, err)
+		common.RespondGrpcError(w, err)
 		return
 	}
 
 	// Assuming you have a transformer function to convert the gRPC response to a suitable HTTP response
 	httpResp := transformers.CreateUserRespJSON(grpcResp) //  Create this function in transformers.go
-	RespondWithJSON(w, http.StatusCreated, httpResp)
+	common.RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
 // GetUser handles GET /users/{user_id}
@@ -86,7 +86,7 @@ func (h *UserProductHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
-		RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
@@ -96,12 +96,12 @@ func (h *UserProductHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	grpcResp, err := h.UserProductClient.Client.GetUserById(ctx, grpcReq)
 	if err != nil {
-		RespondGrpcError(w, err)
+		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.GetUserRespJSON(grpcResp) // Create this function in transformers.go
-	RespondWithJSON(w, http.StatusOK, httpResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // UpdateUser handles PUT /users/{user_id}  
@@ -109,7 +109,7 @@ func (h *UserProductHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
-		RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
@@ -123,7 +123,7 @@ func (h *UserProductHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-		RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
 
@@ -142,12 +142,12 @@ func (h *UserProductHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 
 	grpcResp, err := h.UserProductClient.Client.UpdateUserById(ctx, grpcReq) // Corrected method name
 	if err != nil {
-		RespondGrpcError(w, err)
+		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.UpdateUserRespJSON(grpcResp) // Create this function in transformers.go
-	RespondWithJSON(w, http.StatusOK, httpResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // DeleteUser handles DELETE /users/{user_id}
@@ -155,7 +155,7 @@ func (h *UserProductHandler) DeleteUser(w http.ResponseWriter, r *http.Request) 
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
-		RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
@@ -165,12 +165,12 @@ func (h *UserProductHandler) DeleteUser(w http.ResponseWriter, r *http.Request) 
 
 	grcpResp, err := h.UserProductClient.Client.DeleteUserById(ctx, grpcReq) // Corrected method.  Check the return.
 	if err != nil {
-		RespondGrpcError(w, err)
+		common.RespondGrpcError(w, err)
 		return
 	}
     
 	httpResp := transformers.DeleteUserRespJSON(grpcResp) // Create this function in transformers.go
-	RespondWithJSON(w, http.StatusOK, httpResp) 
+	common.RespondWithJSON(w, http.StatusOK, httpResp) 
 }
 
 // GetFavoritesByUserId handles GET /users/{user_id}/favorites
@@ -178,7 +178,7 @@ func (h *UserProductHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
-		RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
@@ -188,12 +188,12 @@ func (h *UserProductHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http
 
 	grpcResp, err := h.UserProductClient.Client.GetFavoritesByUserId(ctx, grpcReq)
 	if err != nil {
-		RespondGrpcError(w, err)
+		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.GetFavoritesRespJSON(grpcResp) //  Create this in transformers.go
-	RespondWithJSON(w, http.StatusOK, httpResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // CreateFavorite handles POST /users/{user_id}/favorites
@@ -201,7 +201,7 @@ func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Reque
     vars := mux.Vars(r)
     userID := vars["user_id"]
     if userID == "" {
-        RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+        common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
         return
     }
 
@@ -211,7 +211,7 @@ func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Reque
     }
 
     if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-        RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
         return
     }
 
@@ -226,11 +226,11 @@ func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Reque
 
     grpcResp, err := h.UserProductClient.Client.CreateFavorite(ctx, grpcReq)
     if err != nil {
-        RespondGrpcError(w, err)
+        common.RespondGrpcError(w, err)
         return
     }
     httpResp := transformers.CreateFavoriteRespJSON(grpcResp)  // Create this in transformers
-    RespondWithJSON(w, http.StatusCreated, httpResp)
+    common.RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
 // UpdateFavorite handles PUT /users/{user_id}/favorites/{favorite_id}
@@ -239,7 +239,7 @@ func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Reque
     userID := vars["user_id"]   
     favoriteID := vars["favorite_id"]
     if userID == "" || favoriteID == "" {
-        RespondWithError(w, http.StatusBadRequest, "Missing user_id or favorite_id")
+        common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or favorite_id")
         return
     }
 
@@ -247,7 +247,7 @@ func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Reque
         Alias string `json:"alias"`
     }
     if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-        RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
         return
     }
 
@@ -261,12 +261,12 @@ func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Reque
 
     grpcResp, err := h.UserProductClient.Client.UpdateFavoriteById(ctx, grpcReq)  //Corrected name
     if err != nil {
-        RespondGrpcError(w, err)
+        common.RespondGrpcError(w, err)
         return
     }
 
     httpResp := transformers.UpdateFavoriteRespJSON(grpcResp) // Create this
-    RespondWithJSON(w, http.StatusOK, httpResp)
+    common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // DeleteFavorite handles DELETE /users/{user_id}/favorites/{favorite_id}
@@ -275,7 +275,7 @@ func (h *UserProductHandler) DeleteFavorite(w http.ResponseWriter, r *http.Reque
     userID := vars["user_id"]  //  May need this
     favoriteID := vars["favorite_id"]
     if userID == "" || favoriteID == ""{
-        RespondWithError(w, http.StatusBadRequest, "Missing user_id or favorite_id")
+        common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or favorite_id")
         return
     }
     grpcReq := &pb.DeleteFavoriteByIdRequest{Id: favoriteID}  // Corrected
@@ -284,11 +284,11 @@ func (h *UserProductHandler) DeleteFavorite(w http.ResponseWriter, r *http.Reque
 
     grpcResp, err := h.UserProductClient.Client.DeleteFavoriteById(ctx, grpcReq) // Corrected
     if err != nil{
-        RespondGrpcError(w, err)
+        common.RespondGrpcError(w, err)
         return
     }
 	httpResp := transformers.DeleteFavoriteRespJSON(grpcResp) // Create this function in transformers.go
-	RespondWithJSON(w, http.StatusOK, httpResp) 
+	common.RespondWithJSON(w, http.StatusOK, httpResp) 
 }
 
 // GetPocketsByUserId handles GET /users/{user_id}/pockets
@@ -296,7 +296,7 @@ func (h *UserProductHandler) GetPocketsByUserId(w http.ResponseWriter, r *http.R
 	vars := mux.Vars(r)
 	userID := vars["user_id"]
 	if userID == "" {
-		RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
@@ -306,12 +306,12 @@ func (h *UserProductHandler) GetPocketsByUserId(w http.ResponseWriter, r *http.R
 
 	grpcResp, err := h.UserProductClient.Client.GetPocketsByUserId(ctx, grpcReq)
 	if err != nil {
-		RespondGrpcError(w, err)
+		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.GetPocketsRespJSON(grpcResp)
-	RespondWithJSON(w, http.StatusOK, httpResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // CreatePocket handles POST /users/{user_id}/pockets
@@ -319,7 +319,7 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
     vars := mux.Vars(r)
     userID := vars["user_id"]
     if userID == "" {
-        RespondWithError(w, http.StatusBadRequest, "Missing user_id")
+        common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
         return
     }
 
@@ -330,7 +330,7 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
     }
 
     if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-        RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
         return
     }
 
@@ -346,11 +346,11 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
 
     grpcResp, err := h.UserProductClient.Client.CreatePocket(ctx, grpcReq)
     if err != nil {
-        RespondGrpcError(w, err)
+        common.RespondGrpcError(w, err)
         return
     }
     httpResp := transformers.CreatePocketRespJSON(grpcResp)  // Create this in transformers
-    RespondWithJSON(w, http.StatusCreated, httpResp)
+    common.RespondWithJSON(w, http.StatusCreated, httpResp)
 }
 
 // UpdatePocket handles PUT /users/{user_id}/pockets/{pocket_id}
@@ -359,7 +359,7 @@ func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request
     userID := vars["user_id"]   
     pocketID := vars["pocket_id"]
     if userID == "" || pocketID == "" {
-        RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
+        common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
         return
     }
 
@@ -369,7 +369,7 @@ func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request
         MaxAmount      int32  `json:"max_amount"`
     }
     if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil {
-        RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
+        common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
         return
     }
 
@@ -385,12 +385,12 @@ func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request
 
     grpcResp, err := h.UserProductClient.Client.UpdatePocketById(ctx, grpcReq)
     if err != nil {
-        RespondGrpcError(w, err)
+        common.RespondGrpcError(w, err)
         return
     }
 
     httpResp := transformers.UpdatePocketRespJSON(grpcResp) // Create this
-    RespondWithJSON(w, http.StatusOK, httpResp)
+    common.RespondWithJSON(w, http.StatusOK, httpResp)
 }
 
 // DeletePocket handles DELETE /users/{user_id}/pockets/{pocket_id}
@@ -399,7 +399,7 @@ func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request
     userID := vars["user_id"]  //  May need this
     pocketID := vars["pocket_id"]
     if userID == "" || pocketID == ""{
-        RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
+        common.RespondWithError(w, http.StatusBadRequest, "Missing user_id or pocket_id")
         return
     }
     grpcReq := &pb.DeletePocketByIdRequest{Id: pocketID}  
@@ -408,10 +408,10 @@ func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request
 
     grpcResp, err := h.UserProductClient.Client.DeletePocketById(ctx, grpcReq) 
     if err != nil{
-        RespondGrpcError(w, err)
+        common.RespondGrpcError(w, err)
         return
     }
 
 	httpResp := transformers.DeletePocketRespJSON(grpcResp) // Create this function in transformers.go
-	RespondWithJSON(w, http.StatusOK, httpResp) 
+	common.RespondWithJSON(w, http.StatusOK, httpResp) 
 }
