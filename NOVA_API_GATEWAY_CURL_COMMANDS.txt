@@ -1,0 +1,182 @@
+# Nova API Gateway - Curl Commands Reference
+
+## Base URL: http://localhost:8080
+
+# =============================================================================
+# USER MANAGEMENT
+# =============================================================================
+
+# Get list of country codes
+curl -X GET http://localhost:8080/api/country-codes \
+  -H "Content-Type: application/json"
+
+# Create new user
+curl -X POST http://localhost:8080/api/users \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "username": "newuser",
+    "code_id": "country-code-uuid",
+    "phone": "1234567890",
+    "first_name": "John",
+    "last_name": "Doe",
+    "birthdate": "1990-01-01"
+  }'
+
+# Get user details
+curl -X GET http://localhost:8080/api/users/USER_ID \
+  -H "Content-Type: application/json"
+
+# Update user
+curl -X PUT http://localhost:8080/api/users/USER_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "updated@example.com",
+    "phone": "9876543210",
+    "first_name": "Updated",
+    "last_name": "User"
+  }'
+
+# Delete user
+curl -X DELETE http://localhost:8080/api/users/USER_ID \
+  -H "Content-Type: application/json"
+
+# =============================================================================
+# FAVORITES
+# =============================================================================
+
+# Get user's favorites
+curl -X GET http://localhost:8080/api/users/USER_ID/favorites \
+  -H "Content-Type: application/json"
+
+# Add favorite
+curl -X POST http://localhost:8080/api/users/USER_ID/favorites \
+  -H "Content-Type: application/json" \
+  -d '{
+    "favorite_user_id": "FAVORITE_USER_ID",
+    "alias": "Friend"
+  }'
+
+# Update favorite
+curl -X PUT http://localhost:8080/api/users/USER_ID/favorites/FAVORITE_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "alias": "Updated Friend Name"
+  }'
+
+# Delete favorite
+curl -X DELETE http://localhost:8080/api/users/USER_ID/favorites/FAVORITE_ID \
+  -H "Content-Type: application/json"
+
+# =============================================================================
+# POCKETS
+# =============================================================================
+
+# Get user's pockets
+curl -X GET http://localhost:8080/api/users/USER_ID/pockets \
+  -H "Content-Type: application/json"
+
+# Create pocket
+curl -X POST http://localhost:8080/api/users/USER_ID/pockets \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Emergency Fund",
+    "category": "EMERGENCY",
+    "max_amount": 10000
+  }'
+
+# Update pocket
+curl -X PUT http://localhost:8080/api/users/USER_ID/pockets/POCKET_ID \
+  -H "Content-Type: application/json" \
+  -d '{
+    "name": "Updated Pocket Name",
+    "max_amount": 15000
+  }'
+
+# Delete pocket
+curl -X DELETE http://localhost:8080/api/users/USER_ID/pockets/POCKET_ID \
+  -H "Content-Type: application/json"
+
+# =============================================================================
+# VERIFICATIONS
+# =============================================================================
+
+# Get user's verifications
+curl -X GET http://localhost:8080/api/users/USER_ID/verifications \
+  -H "Content-Type: application/json"
+
+# Update verification status
+curl -X PUT http://localhost:8080/api/users/USER_ID/verifications \
+  -H "Content-Type: application/json" \
+  -d '{
+    "type": "email",
+    "status": "COMPLETE"
+  }'
+
+# =============================================================================
+# AUTHENTICATION
+# =============================================================================
+
+# User login
+curl -X POST http://localhost:8080/api/login \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "securepassword123"
+  }'
+
+# =============================================================================
+# TRANSACTIONS
+# =============================================================================
+
+# Create account
+curl -X POST http://localhost:8080/api/accounts \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "USER_ID"
+  }'
+
+# Make transfer
+curl -X POST http://localhost:8080/api/transfers \
+  -H "Content-Type: application/json" \
+  -d '{
+    "from_user_id": "SENDER_USER_ID",
+    "to_user_id": "RECIPIENT_USER_ID",
+    "amount": 100
+  }'
+
+# Get balance
+curl -X GET http://localhost:8080/api/balance?user_id=USER_ID \
+  -H "Content-Type: application/json"
+
+# Get transaction history
+curl -X GET "http://localhost:8080/api/movements?user_id=USER_ID&from_time=2023-01-01T00:00:00Z&to_time=2023-12-31T23:59:59Z&limit=10" \
+  -H "Content-Type: application/json"
+
+# =============================================================================
+# ADDITIONAL TRANSACTION OPERATIONS
+# =============================================================================
+
+# Transfer to pocket
+curl -X POST http://localhost:8080/api/transfers/pocket \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "USER_ID",
+    "pocket_id": "POCKET_ID",
+    "amount": 50,
+    "direction": "to_pocket"
+  }'
+
+# Transfer from pocket to main account
+curl -X POST http://localhost:8080/api/transfers/pocket \
+  -H "Content-Type: application/json" \
+  -d '{
+    "user_id": "USER_ID",
+    "pocket_id": "POCKET_ID",
+    "amount": 25,
+    "direction": "from_pocket"
+  }'
+
+# Get pocket balance
+curl -X GET "http://localhost:8080/api/balance/pocket?user_id=USER_ID&pocket_id=POCKET_ID" \
+  -H "Content-Type: application/json" 
