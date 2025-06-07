@@ -31,25 +31,32 @@ func (h *TransactionHandler) GetMovements(w http.ResponseWriter, r *http.Request
 	}
 
 	query := r.URL.Query()
-	userId := query.Get("user_id")
-	fromTimeStr := query.Get("from_time")
-	toTimeStr := query.Get("to_time")
-	limitStr := query.Get("limit")
+	userId := query.Get("id")
+	fromTimeStr := query.Get("from")
+	toTimeStr := query.Get("to")
+	limitStr := query.Get("lim")
 
 	if userId == "" {
 		common.RespondWithError(w, http.StatusBadRequest, "Missing user_id")
 		return
 	}
 
-	fromTime, err := strconv.ParseUint(fromTimeStr, 10, 64)
-	if err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'from' time format")
+	var fromTime, toTime uint64
+	var err error
+
+	if fromTimeStr == "" && toTimeStr == "" {
 		return
-	}
-	toTime, err := strconv.ParseUint(toTimeStr, 10, 64)
-	if err != nil {
-		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'to' time format")
-		return
+	} else {
+		fromTime, err = strconv.ParseUint(fromTimeStr, 10, 64)
+		if err != nil {
+			common.RespondWithError(w, http.StatusBadRequest, "Invalid 'from' time format")
+			return
+		}
+		toTime, err = strconv.ParseUint(toTimeStr, 10, 64)
+		if err != nil {
+			common.RespondWithError(w, http.StatusBadRequest, "Invalid 'to' time format")
+			return
+		}
 	}
 
 	limit := false

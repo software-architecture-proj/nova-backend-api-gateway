@@ -31,20 +31,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to create AuthServiceClient: %v", err) //  Critical
 	}
-	defer AuthClient.CloseConnection() // Fixed: was using wrong client
+	defer AuthClient.CloseConnection() // Ensure connection is closed when main exits.
 
 	TransactionClient, err := clients.NewTransactionServiceClient(cfg.TransactionServiceGRPCHost)
 	if err != nil {
 		log.Fatalf("Failed to create TransactionServiceClient: %v", err) //  Critical
 	}
-	defer TransactionClient.CloseConnection() // Fixed: was using wrong client
+	defer TransactionClient.CloseConnection() // Ensure connection is closed when main exits.
 
 	// Set up HTTP router
 	router := mux.NewRouter()
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
 	// Initialize HTTP handlers
-	userProductHandler := handlers.NewUserProductHandler(userProductClient)
+	userProductHandler := handlers.NewUserProductHandler(userProductClient, TransactionClient)
 	AuthHandler := handlers.NewAuthHandler(AuthClient)
 	TransactionHandler := handlers.NewTransactionHandler(TransactionClient)
 	// ... initialize other handlers (e.g., productHandler, accountHandler)
@@ -55,13 +55,13 @@ func main() {
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
-	
+
 	// Favorites routes
 	apiRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.GetFavoritesByUserId).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.CreateFavorite).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.UpdateFavorite).Methods(http.MethodPut)
 	apiRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.DeleteFavorite).Methods(http.MethodDelete)
-	
+
 	// Pockets routes
 	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.GetPocketsByUserId).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.CreatePocket).Methods(http.MethodPost)
@@ -77,7 +77,7 @@ func main() {
 
 	// Transaction routes
 	apiRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost)
-	apiRouter.HandleFunc("/transfers", TransactionHandler.PostTransfer).Methods(http.MethodPost) // Fixed: was using wrong handler method
+	apiRouter.HandleFunc("/transfers", TransactionHandler.PostTransfer).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
 
