@@ -13,14 +13,18 @@ import (
 
 	// Import from common-protos
 	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/transaction_service"
+	userpb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/user_service"
 )
 
 type TransactionHandler struct {
 	TransactionClient *clients.TransactionServiceClient
+	UserProductClient *clients.UserProductServiceClient
 }
 
-func NewTransactionHandler(TransactionClient *clients.TransactionServiceClient) *TransactionHandler {
-	return &TransactionHandler{TransactionClient: TransactionClient}
+func NewTransactionHandler(TransactionClient *clients.TransactionServiceClient, userClient *clients.UserProductServiceClient) *TransactionHandler {
+	return &TransactionHandler{
+        TransactionClient: TransactionClient,
+        UserProductClient: userClient,
 }
 
 // GetMovements handles GET /movements
@@ -141,7 +145,7 @@ func (h *TransactionHandler) GetBalance(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	toTime, err := strconv.ParseUint(toTimeStr, 10, 64)
-	if err != nil {
+if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'to' time format")
 		return
 	}
@@ -178,14 +182,29 @@ func (h *TransactionHandler) PostTransfer(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	grpcReq := &pb.TransferFundsRequest{
-		FromUserId: reqBody.FromUser,
-		ToUserId:   reqBody.ToUser,
-		Amount:     reqBody.Amount,
-	}
-
+	// Get user email from user service
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
+
+	userResp, err := h.UserProductClient.Client.GetUserById(ctx, &userpb.GetUserByIdRequest{
+		UserId: reqBody.FromUser,
+	})
+	if err != nil {
+		common.RespondGrpcError(w, err)
+		return
+	}
+
+	if !userResp.Success {
+		common.RespondWithError(w, http.StatusBadRequest, userResp.Message)
+		return
+	}
+
+	grpcReq := &pb.TransferFundsRequest{
+		FromUserId:    reqBody.FromUser,
+		ToUserId:      reqBody.ToUser,
+		Amount:        reqBody.Amount,
+		FromUserEmail: userResp.Email,
+	}
 
 	grpcResp, err := h.TransactionClient.Client.Transfer(ctx, grpcReq)
 	if err != nil {
