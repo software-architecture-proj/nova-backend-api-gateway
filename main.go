@@ -15,6 +15,7 @@ import (
 
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/handlers"
+	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/middleware"
 )
 
 func corsMiddleware(next http.Handler) http.Handler {
@@ -67,12 +68,17 @@ func main() {
 	userProductHandler := handlers.NewUserProductHandler(userProductClient, TransactionClient, AuthClient)
 	AuthHandler := handlers.NewAuthHandler(AuthClient)
 	TransactionHandler := handlers.NewTransactionHandler(TransactionClient)
+	Middle := middleware.NewMiddleware()
 	// ... initialize other handlers (e.g., productHandler, accountHandler)
-
-	// User and Products routes
 	apiRouter.HandleFunc("/country-codes", userProductHandler.GetCountryCodes).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users", userProductHandler.CreateUser).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/login", AuthHandler.PostLogin).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
+
+	apiRouter.Use(Middle.AuthToken) // Middleware for logging requests
+	// User and Products routes
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
 
@@ -93,13 +99,10 @@ func main() {
 	apiRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.UpdateVerificationByUserId).Methods(http.MethodPut)
 
 	// Auth routes
-	apiRouter.HandleFunc("/login", AuthHandler.PostLogin).Methods(http.MethodPost)
 
 	// Transaction routes
-	apiRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost) //deprecated
 	apiRouter.HandleFunc("/transfers", TransactionHandler.PostTransfer).Methods(http.MethodPost)
-	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
-	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
 
 	// Create HTTP server
 	server := &http.Server{
