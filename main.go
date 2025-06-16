@@ -44,7 +44,7 @@ func main() {
 	apiRouter := router.PathPrefix("/api").Subrouter()
 
 	// Initialize HTTP handlers
-	userProductHandler := handlers.NewUserProductHandler(userProductClient, TransactionClient)
+	userProductHandler := handlers.NewUserProductHandler(userProductClient, TransactionClient, AuthClient)
 	AuthHandler := handlers.NewAuthHandler(AuthClient)
 	TransactionHandler := handlers.NewTransactionHandler(TransactionClient)
 	// ... initialize other handlers (e.g., productHandler, accountHandler)
