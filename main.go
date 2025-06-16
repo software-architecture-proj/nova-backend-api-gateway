@@ -67,9 +67,9 @@ func main() {
 	// Initialize HTTP handlers
 	userProductHandler := handlers.NewUserProductHandler(userProductClient, TransactionClient, AuthClient)
 	AuthHandler := handlers.NewAuthHandler(AuthClient)
-	TransactionHandler := handlers.NewTransactionHandler(TransactionClient)
-	Middle := middleware.NewMiddleware()
-	// ... initialize other handlers (e.g., productHandler, accountHandler)
+	TransactionHandler := handlers.NewTransactionHandler(TransactionClient, userProductClient)
+
+	// Public routes (no authentication required)
 	apiRouter.HandleFunc("/country-codes", userProductHandler.GetCountryCodes).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users", userProductHandler.CreateUser).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
@@ -77,32 +77,33 @@ func main() {
 	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
 
-	apiRouter.Use(Middle.AuthToken) // Middleware for logging requests
+	// Protected routes (authentication required)
+	protectedRouter := apiRouter.PathPrefix("").Subrouter()
+	protectedRouter.Use(middleware.NewMiddleware().AuthToken)
+
 	// User and Products routes
-	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut)
-	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
+	protectedRouter.HandleFunc("/users/{user_id}", userProductHandler.UpdateUser).Methods(http.MethodPut)
+	protectedRouter.HandleFunc("/users/{user_id}", userProductHandler.DeleteUser).Methods(http.MethodDelete)
 
 	// Favorites routes
-	apiRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.GetFavoritesByUserId).Methods(http.MethodGet)
-	apiRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.CreateFavorite).Methods(http.MethodPost)
-	apiRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.UpdateFavorite).Methods(http.MethodPut)
-	apiRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.DeleteFavorite).Methods(http.MethodDelete)
+	protectedRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.GetFavoritesByUserId).Methods(http.MethodGet)
+	protectedRouter.HandleFunc("/users/{user_id}/favorites", userProductHandler.CreateFavorite).Methods(http.MethodPost)
+	protectedRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.UpdateFavorite).Methods(http.MethodPut)
+	protectedRouter.HandleFunc("/users/{user_id}/favorites/{favorite_id}", userProductHandler.DeleteFavorite).Methods(http.MethodDelete)
 
 	// Pockets routes
-	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.GetPocketsByUserId).Methods(http.MethodGet)
-	apiRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.CreatePocket).Methods(http.MethodPost)
-	apiRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.UpdatePocket).Methods(http.MethodPut)
-	apiRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.DeletePocket).Methods(http.MethodDelete)
+	protectedRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.GetPocketsByUserId).Methods(http.MethodGet)
+	protectedRouter.HandleFunc("/users/{user_id}/pockets", userProductHandler.CreatePocket).Methods(http.MethodPost)
+	protectedRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.UpdatePocket).Methods(http.MethodPut)
+	protectedRouter.HandleFunc("/users/{user_id}/pockets/{pocket_id}", userProductHandler.DeletePocket).Methods(http.MethodDelete)
 
 	// Verification routes
-	apiRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.GetVerificationsByUserId).Methods(http.MethodGet)
-	apiRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.UpdateVerificationByUserId).Methods(http.MethodPut)
-
-	// Auth routes
+	protectedRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.GetVerificationsByUserId).Methods(http.MethodGet)
+	protectedRouter.HandleFunc("/users/{user_id}/verifications", userProductHandler.UpdateVerificationByUserId).Methods(http.MethodPut)
 
 	// Transaction routes
-	apiRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost) //deprecated
-	apiRouter.HandleFunc("/transfers", TransactionHandler.PostTransfer).Methods(http.MethodPost)
+	protectedRouter.HandleFunc("/accounts", TransactionHandler.PostAccount).Methods(http.MethodPost) //deprecated
+	protectedRouter.HandleFunc("/transfers", TransactionHandler.PostTransfer).Methods(http.MethodPost)
 
 	// Create HTTP server
 	server := &http.Server{

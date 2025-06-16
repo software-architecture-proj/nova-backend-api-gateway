@@ -13,7 +13,7 @@ import (
 
 	// Import from common-protos
 	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/transaction_service"
-	userpb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/user_service"
+	userpb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/user_product_service"
 )
 
 type TransactionHandler struct {
@@ -23,8 +23,9 @@ type TransactionHandler struct {
 
 func NewTransactionHandler(TransactionClient *clients.TransactionServiceClient, userClient *clients.UserProductServiceClient) *TransactionHandler {
 	return &TransactionHandler{
-        TransactionClient: TransactionClient,
-        UserProductClient: userClient,
+		TransactionClient: TransactionClient,
+		UserProductClient: userClient,
+	}
 }
 
 // GetMovements handles GET /movements
@@ -145,7 +146,7 @@ func (h *TransactionHandler) GetBalance(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	toTime, err := strconv.ParseUint(toTimeStr, 10, 64)
-if err != nil {
+	if err != nil {
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid 'to' time format")
 		return
 	}
