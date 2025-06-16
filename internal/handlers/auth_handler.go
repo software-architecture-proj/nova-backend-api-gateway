@@ -48,5 +48,17 @@ func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpResp := transformers.LoginRespJSON(grpcResp)
+
+	token := httpResp["data"].(string)
+	http.SetCookie(w, &http.Cookie{
+		Name:     "accessToken",
+		Value:    token,
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/",
+		SameSite: http.SameSiteStrictMode,
+		MaxAge:   900, // 15 minutes in seconds to match exp claim
+	})
+
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
 }

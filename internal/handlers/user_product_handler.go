@@ -8,13 +8,13 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/common"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/transformers"
 
 	// Import from common-protos
+	ab "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/auth_service"
 	tb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/transaction_service"
 	pb "github.com/software-architecture-proj/nova-backend-common-protos/gen/go/user_product_service"
 )
@@ -22,12 +22,14 @@ import (
 type UserProductHandler struct {
 	UserProductClient *clients.UserProductServiceClient
 	TransactionClient *clients.TransactionServiceClient
+	AuthClient        *clients.AuthServiceClient
 }
 
-func NewUserProductHandler(userClient *clients.UserProductServiceClient, transactionClient *clients.TransactionServiceClient) *UserProductHandler {
+func NewUserProductHandler(userClient *clients.UserProductServiceClient, transactionClient *clients.TransactionServiceClient, authClient *clients.AuthServiceClient) *UserProductHandler {
 	return &UserProductHandler{
 		UserProductClient: userClient,
 		TransactionClient: transactionClient,
+		AuthClient:        authClient,
 	}
 }
 
@@ -60,6 +62,7 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 	var reqBody struct {
 		Email     string `json:"email"`
 		Username  string `json:"username"`
+		Password  string `json:"password"`
 		CodeId    string `json:"code_id"`
 		Phone     string `json:"phone"`
 		FirstName string `json:"first_name"`
@@ -71,7 +74,26 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 		common.RespondWithError(w, http.StatusBadRequest, "Invalid request payload")
 		return
 	}
-	userID := uuid.New().String()
+
+	grpcReqAuth := &ab.CreateUserRequest{
+		Username: reqBody.Username,
+		Phone:    reqBody.Phone,
+		Password: reqBody.Password,
+		Email:    reqBody.Email,
+	}
+
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+	authResp, authErr := h.AuthClient.Client.CreateUser(ctx, grpcReqAuth)
+	if authErr != nil {
+		common.RespondGrpcError(w, authErr)
+		return
+	}
+	userID := authResp.Data
+
+	grpcReqTB := &tb.CreateAccountRequest{
+		UserId:   userID,
+		Username: reqBody.Username,
+	}
 
 	grpcReqUS := &pb.CreateUserRequest{
 		UserId:    userID,
@@ -84,12 +106,6 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 		Birthdate: reqBody.Birthdate,
 	}
 
-	grpcReqTB := &tb.CreateAccountRequest{
-		UserId:   userID,
-		Username: reqBody.Username,
-	}
-
-	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
 	var wg sync.WaitGroup
