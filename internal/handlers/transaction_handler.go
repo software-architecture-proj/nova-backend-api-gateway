@@ -155,11 +155,7 @@ func (h *TransactionHandler) GetBalance(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	defer cancel()
 
-	grpcResp, err := h.TransactionClient.Client.Balance(ctx, grpcReq)
-	if err != nil {
-		common.RespondGrpcError(w, err)
-		return
-	}
+	grpcResp, _ := h.TransactionClient.Client.Balance(ctx, grpcReq)
 
 	httpResp := transformers.GetBalanceRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)

@@ -21,7 +21,7 @@ import (
 func corsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		origin := r.Header.Get("Origin")
-		if origin == "http://localhost:3002" {
+		if origin == "http://localhost:3001" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 		}
 
