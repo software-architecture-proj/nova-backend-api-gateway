@@ -33,15 +33,29 @@ func NewMiddleware() MiddlewareInterface {
 
 func (m *TokenClaims) AuthToken(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Extract token from Authorization header
+		// Try to get token from cookie first
 		tokenString, err := r.Cookie("accessToken")
-		if tokenString.Value == "" || err != nil {
-			http.Error(w, "Authorization is required", http.StatusUnauthorized)
-			return
+		var tokenValue string
+		if err == nil && tokenString.Value != "" {
+			tokenValue = tokenString.Value
+		} else {
+			// If no cookie, try Authorization header
+			authHeader := r.Header.Get("Authorization")
+			if authHeader == "" {
+				http.Error(w, "Authorization is required", http.StatusUnauthorized)
+				return
+			}
+			// Check if it's a Bearer token
+			if len(authHeader) > 7 && authHeader[:7] == "Bearer " {
+				tokenValue = authHeader[7:]
+			} else {
+				http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+				return
+			}
 		}
 
 		// Validate and decode the token
-		tokenClaims, err := validateToken(tokenString.Value)
+		tokenClaims, err := validateToken(tokenValue)
 		if err != nil {
 			http.Error(w, fmt.Sprintf("Invalid token: %v", err), http.StatusUnauthorized)
 			return

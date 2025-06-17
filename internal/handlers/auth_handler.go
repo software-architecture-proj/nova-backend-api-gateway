@@ -56,8 +56,9 @@ func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
 		HttpOnly: true,
 		Secure:   true,
 		Path:     "/",
-		SameSite: http.SameSiteStrictMode,
+		SameSite: http.SameSiteNoneMode,
 		MaxAge:   900, // 15 minutes in seconds to match exp claim
+
 	})
 
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
