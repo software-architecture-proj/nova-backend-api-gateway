@@ -3,11 +3,12 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/clients"
 	"github.com/software-architecture-proj/nova-backend-api-gateway/internal/common"
@@ -85,14 +86,17 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
 	authResp, authErr := h.AuthClient.Client.CreateUser(ctx, grpcReqAuth)
 	if authErr != nil {
+		defer cancel()
+		log.Println("Error creating user in auth service:", authErr)
 		common.RespondGrpcError(w, authErr)
 		return
 	}
 	userID := authResp.Data
-
+	log.Println("User created in auth service with ID:", userID)
 	grpcReqTB := &tb.CreateAccountRequest{
 		UserId:   userID,
 		Username: reqBody.Username,
+		Bank:     false,
 	}
 
 	grpcReqUS := &pb.CreateUserRequest{
@@ -105,8 +109,6 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 		LastName:  reqBody.LastName,
 		Birthdate: reqBody.Birthdate,
 	}
-
-	defer cancel()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -124,23 +126,28 @@ func (h *UserProductHandler) CreateUser(w http.ResponseWriter, r *http.Request) 
 		defer wg.Done()
 		_, tbErr = h.TransactionClient.Client.Account(ctx, grpcReqTB)
 		if tbErr != nil {
-			fmt.Printf("Error creating account: %v", tbErr)
+			log.Println("Error creating account: ", tbErr)
 		}
 	}()
 
 	wg.Wait()
 
 	if userErr != nil {
+		defer cancel()
+		log.Println("Error creating user:", userErr)
 		common.RespondGrpcError(w, userErr)
 		return
 	}
 	if tbErr != nil {
+		defer cancel()
+		log.Println("Error creating account v2:", tbErr)
 		common.RespondGrpcError(w, tbErr)
 		return
 	}
 
 	httpResp := transformers.CreateUserRespJSON(userResp)
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
+	defer cancel()
 }
 
 // GetUser handles GET /users/{user_id}
@@ -158,16 +165,17 @@ func (h *UserProductHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	grpcReq := &pb.GetUserByIdRequest{UserId: userID}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.GetUserById(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.GetUserRespJSON(grpcResp) // Create this function in transformers.go
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
 }
 
 // UpdateUser handles PUT /users/{user_id}
@@ -208,16 +216,17 @@ func (h *UserProductHandler) UpdateUser(w http.ResponseWriter, r *http.Request) 
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.UpdateUserById(ctx, grpcReq) // Corrected method name
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.UpdateUserRespJSON(grpcResp) // Create this function in transformers.go
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
 }
 
 // DeleteUser handles DELETE /users/{user_id}
@@ -235,16 +244,17 @@ func (h *UserProductHandler) DeleteUser(w http.ResponseWriter, r *http.Request) 
 
 	grpcReq := &pb.DeleteUserByIdRequest{Id: userID} // Corrected struct.
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.DeleteUserById(ctx, grpcReq) // Corrected method.  Check the return.
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.DeleteUserRespJSON(grpcResp) // Create this function in transformers.go
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
 }
 
 // GetFavoritesByUserId handles GET /users/{user_id}/favorites
@@ -262,16 +272,17 @@ func (h *UserProductHandler) GetFavoritesByUserId(w http.ResponseWriter, r *http
 
 	grpcReq := &pb.GetFavoritesByUserIdRequest{UserId: userID}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.GetFavoritesByUserId(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.GetFavoritesRespJSON(grpcResp) //  Create this in transformers.go
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
 }
 
 // CreateFavorite handles POST /users/{user_id}/favorites
@@ -304,16 +315,17 @@ func (h *UserProductHandler) CreateFavorite(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.CreateFavorite(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.CreateFavoriteRespJSON(grpcResp) // Create this function in transformers.go
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
+	defer cancel()
 }
 
 // UpdateFavorite handles PUT /users/{user_id}/favorites/{favorite_id}
@@ -344,16 +356,17 @@ func (h *UserProductHandler) UpdateFavorite(w http.ResponseWriter, r *http.Reque
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.UpdateFavoriteById(ctx, grpcReq) //Corrected name
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.UpdateFavoriteRespJSON(grpcResp) // Create this
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
 }
 
 // DeleteFavorite handles DELETE /users/{user_id}/favorites/{favorite_id}
@@ -373,16 +386,17 @@ func (h *UserProductHandler) DeleteFavorite(w http.ResponseWriter, r *http.Reque
 
 	grpcReq := &pb.DeleteFavoriteByIdRequest{Id: favoriteID}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.DeleteFavoriteById(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.DeleteFavoriteRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
 }
 
 // GetPocketsByUserId handles GET /users/{user_id}/pockets
@@ -400,16 +414,18 @@ func (h *UserProductHandler) GetPocketsByUserId(w http.ResponseWriter, r *http.R
 
 	grpcReq := &pb.GetPocketsByUserIdRequest{UserId: userID}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
-
 	grpcResp, err := h.UserProductClient.Client.GetPocketsByUserId(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
+
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.GetPocketsRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
+
 }
 
 // CreatePocket handles POST /users/{user_id}/pockets
@@ -446,13 +462,14 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
 	}
 
 	grpcReqTB := &tb.CreateAccountRequest{
-		UserId:   userID,
-		Username: reqBody.Username, // Assuming the pocket name is used as the username for the account
-		Bank:     false,            // Assuming pockets are not bank accounts
+		UserId:   uuid.New().String(), // Generate a new UUID for the account
+		Username: reqBody.Username,
+		Bank:     false,
 	}
+	log.Println("User: ", grpcReqUS.UserId, grpcReqUS.Category)
+	log.Println("Trans: ", grpcReqTB.UserId, grpcReqTB.Username)
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	var wg sync.WaitGroup
 	wg.Add(2)
@@ -468,22 +485,30 @@ func (h *UserProductHandler) CreatePocket(w http.ResponseWriter, r *http.Request
 		defer wg.Done()
 		_, tbErr = h.TransactionClient.Client.Account(ctx, grpcReqTB)
 		if tbErr != nil {
-			fmt.Printf("Error creating account: %v", tbErr)
+			log.Println("Error creating pocket account: ", tbErr)
+			defer cancel()
+			return
 		}
 	}()
 	wg.Wait()
 
 	if pocketErr != nil {
+		log.Println("Error creating pocket: ", pocketErr)
 		common.RespondGrpcError(w, pocketErr)
+		defer cancel()
 		return
 	}
 	if tbErr != nil {
+		log.Println("Error creating pocket account v2:", tbErr)
 		common.RespondGrpcError(w, tbErr)
+		defer cancel()
 		return
 	}
 
 	httpResp := transformers.CreatePocketRespJSON(pocketResp) // Create this in transformers
 	common.RespondWithJSON(w, http.StatusCreated, httpResp)
+	defer cancel()
+
 }
 
 // UpdatePocket handles PUT /users/{user_id}/pockets/{pocket_id}
@@ -519,16 +544,19 @@ func (h *UserProductHandler) UpdatePocket(w http.ResponseWriter, r *http.Request
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.UpdatePocketById(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
+
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.UpdatePocketRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
+
 }
 
 // DeletePocket handles DELETE /users/{user_id}/pockets/{pocket_id}
@@ -548,16 +576,19 @@ func (h *UserProductHandler) DeletePocket(w http.ResponseWriter, r *http.Request
 
 	grpcReq := &pb.DeletePocketByIdRequest{Id: pocketID}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.DeletePocketById(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
+
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.DeletePocketRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
+
 }
 
 // GetVerificationsByUserId handles GET /users/{user_id}/verifications
@@ -580,12 +611,16 @@ func (h *UserProductHandler) GetVerificationsByUserId(w http.ResponseWriter, r *
 
 	grpcResp, err := h.UserProductClient.Client.GetVerificationsByUserId(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
+
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.GetVerificationsRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
+
 }
 
 // UpdateVerificationByUserId handles PUT /users/{user_id}/verifications
@@ -619,14 +654,17 @@ func (h *UserProductHandler) UpdateVerificationByUserId(w http.ResponseWriter, r
 	}
 
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.UserProductClient.Client.UpdateVerificationByUserId(ctx, grpcReq)
 	if err != nil {
+		defer cancel()
+
 		common.RespondGrpcError(w, err)
 		return
 	}
 
 	httpResp := transformers.UpdateVerificationRespJSON(grpcResp)
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
+
 }

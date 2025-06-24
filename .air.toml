@@ -1,0 +1,33 @@
+# .air.toml
+
+root = "."
+tmp_dir = "tmp"
+
+[build]
+cmd = "go build -o ./api_gateway main.go"
+bin = "./api_gateway"
+
+exclude_dir = [
+  "tmp", "vendor", "testdata", "node_modules", "static", "assets", "frontend", "pkg"
+]
+
+watch_exts = ["go", "mod", "sum", "toml"]
+exclude_files = []
+
+stop_on_error = true
+send_interrupt = true
+poll = true
+poll_interval = 500
+delay = 1000
+
+[log]
+time = true
+
+[color]
+main = "magenta"
+watcher = "cyan"
+build = "yellow"
+runner = "green"
+
+[misc]
+clean_on_exit = true

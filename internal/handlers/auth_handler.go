@@ -39,10 +39,10 @@ func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 
 	grpcResp, err := h.AuthClient.Client.LoginUser(ctx, &pb.LoginRequest{Email: reqBody.Email, Password: reqBody.Password})
 	if err != nil {
+		defer cancel()
 		common.RespondGrpcError(w, err)
 		return
 	}
@@ -58,8 +58,8 @@ func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
 		Path:     "/",
 		SameSite: http.SameSiteNoneMode,
 		MaxAge:   900, // 15 minutes in seconds to match exp claim
-
 	})
 
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
 }

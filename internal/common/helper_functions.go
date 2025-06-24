@@ -21,16 +21,16 @@ func RespondGrpcError(w http.ResponseWriter, err error) {
 		case codes.AlreadyExists:
 			RespondWithError(w, http.StatusConflict, st.Message())
 		case codes.Unavailable:
-			RespondWithError(w, http.StatusServiceUnavailable, "Backend service unavailable")
+			RespondWithError(w, http.StatusServiceUnavailable, "Backend service unavailable: "+err.Error())
 		case codes.DeadlineExceeded:
-			RespondWithError(w, http.StatusGatewayTimeout, "Backend service timeout")
+			RespondWithError(w, http.StatusGatewayTimeout, "Backend service timeout: "+err.Error())
 		default:
 			log.Printf("gRPC error: code=%v, message=%s", st.Code(), st.Message())
-			RespondWithError(w, http.StatusBadGateway, "Backend service error")
+			RespondWithError(w, http.StatusBadGateway, "Backend service error: "+err.Error())
 		}
 	} else {
 		log.Printf("Non-gRPC error: %v", err)
-		RespondWithError(w, http.StatusInternalServerError, "Internal server error")
+		RespondWithError(w, http.StatusInternalServerError, "Internal server error: "+err.Error())
 	}
 }
 
@@ -46,9 +46,9 @@ func RespondWithJSON(w http.ResponseWriter, statusCode int, payload interface{})
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	_, err = w.Write(response)
-    if err != nil {
-        log.Printf("Error writing response: %v", err)
-    }
+	if err != nil {
+		log.Printf("Error writing response: %v", err)
+	}
 }
 
 // RespondWithError writes an error JSON response to the HTTP response writer.

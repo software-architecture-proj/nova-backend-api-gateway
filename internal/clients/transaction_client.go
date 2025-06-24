@@ -17,7 +17,7 @@ type TransactionServiceClient struct {
 func NewTransactionServiceClient(grpcHost string) (*TransactionServiceClient, error) {
 	conn, err := grpc.Dial(grpcHost, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		log.Printf("did not connect to TransactionService: %v", err)
+		log.Println("did not connect to TransactionService: ", err)
 		return nil, err
 	}
 
