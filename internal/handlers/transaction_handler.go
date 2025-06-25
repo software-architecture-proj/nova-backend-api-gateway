@@ -75,7 +75,6 @@ func (h *TransactionHandler) GetMovements(w http.ResponseWriter, r *http.Request
 
 	grpcReq := &pb.GetMovementsRequest{UserId: userId, FromTime: fromTime, ToTime: toTime, Limit: limit}
 	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
-	defer cancel()
 	grpcResp, err := h.TransactionClient.Client.Movements(ctx, grpcReq)
 	if err != nil {
 		defer cancel()
