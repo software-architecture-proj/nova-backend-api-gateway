@@ -4,9 +4,10 @@ go 1.24.3
 
 require (
 	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
-	github.com/software-architecture-proj/nova-backend-common-protos v0.0.0-20250616022611-dcf45b575ecc
+	github.com/software-architecture-proj/nova-backend-common-protos v0.0.0-20250702023127-4d2a66aff785
 	google.golang.org/grpc v1.73.0
 )
 

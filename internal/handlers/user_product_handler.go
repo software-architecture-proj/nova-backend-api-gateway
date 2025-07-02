@@ -178,6 +178,34 @@ func (h *UserProductHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 }
 
+// GetUser handles GET /users/name/{username}
+func (h *UserProductHandler) GetUsername(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		common.RespondWithError(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+	vars := mux.Vars(r)
+	uname := vars["username"]
+	if uname == "" {
+		common.RespondWithError(w, http.StatusBadRequest, "Missing username")
+		return
+	}
+
+	grpcReq := &pb.GetUserByUsernameRequest{Username: uname}
+	ctx, cancel := context.WithTimeout(r.Context(), 5*time.Second)
+
+	grpcResp, err := h.UserProductClient.Client.GetUserByUsername(ctx, grpcReq)
+	if err != nil {
+		common.RespondGrpcError(w, err)
+		defer cancel()
+		return
+	}
+
+	httpResp := transformers.GetUsernameRespJSON(grpcResp)
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
+	defer cancel()
+}
+
 // UpdateUser handles PUT /users/{user_id}
 func (h *UserProductHandler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {

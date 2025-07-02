@@ -63,3 +63,19 @@ func (h *AuthHandler) PostLogin(w http.ResponseWriter, r *http.Request) {
 	common.RespondWithJSON(w, http.StatusOK, httpResp)
 	defer cancel()
 }
+
+// Logout
+func (h *AuthHandler) PostLogout(w http.ResponseWriter, r *http.Request) {
+	httpResp := transformers.LogOutRespJSON()
+	http.SetCookie(w, &http.Cookie{
+		Name:     "accessToken",
+		Value:    "",
+		HttpOnly: true,
+		Secure:   true,
+		Path:     "/",
+		SameSite: http.SameSiteNoneMode,
+		MaxAge:   -1,
+	})
+
+	common.RespondWithJSON(w, http.StatusOK, httpResp)
+}

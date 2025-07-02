@@ -12,27 +12,36 @@ func CreateUserRespJSON(resp *pb.CreateUserResponse) map[string]interface{} {
 
 func GetUserRespJSON(resp *pb.GetUserByIdResponse) map[string]interface{} {
 	return map[string]interface{}{
-		"success":     resp.GetSuccess(),
-		"message":     resp.GetMessage(),
-		"email":       resp.GetEmail(),
-		"username":    resp.GetUsername(),
-		"phone":       resp.GetPhone(),
-		"first_name":  resp.GetFirstName(),
-		"last_name":   resp.GetLastName(),
-		"birthdate":   resp.GetBirthdate(),
+		"success":    resp.GetSuccess(),
+		"message":    resp.GetMessage(),
+		"email":      resp.GetEmail(),
+		"username":   resp.GetUsername(),
+		"phone":      resp.GetPhone(),
+		"first_name": resp.GetFirstName(),
+		"last_name":  resp.GetLastName(),
+		"birthdate":  resp.GetBirthdate(),
+	}
+}
+
+func GetUsernameRespJSON(resp *pb.GetUserByUsernameResponse) map[string]interface{} {
+	return map[string]interface{}{
+		"success": resp.GetSuccess(),
+		"message": resp.GetMessage(),
+		"email":   resp.GetEmail(),
+		"user_id": resp.GetUserId(),
 	}
 }
 
 func UpdateUserRespJSON(resp *pb.UpdateUserByIdResponse) map[string]interface{} {
 	return map[string]interface{}{
-		"success":     resp.GetSuccess(),
-		"message":     resp.GetMessage(),
-		"email":       resp.GetEmail(),
-		"username":    resp.GetUsername(),
-		"phone":       resp.GetPhone(),
-		"first_name":  resp.GetFirstName(),
-		"last_name":   resp.GetLastName(),
-		"birthdate":   resp.GetBirthdate(),
+		"success":    resp.GetSuccess(),
+		"message":    resp.GetMessage(),
+		"email":      resp.GetEmail(),
+		"username":   resp.GetUsername(),
+		"phone":      resp.GetPhone(),
+		"first_name": resp.GetFirstName(),
+		"last_name":  resp.GetLastName(),
+		"birthdate":  resp.GetBirthdate(),
 	}
 }
 
@@ -71,9 +80,9 @@ func CreateFavoriteRespJSON(resp *pb.CreateFavoriteResponse) map[string]interfac
 
 func UpdateFavoriteRespJSON(resp *pb.UpdateFavoriteByIdResponse) map[string]interface{} {
 	return map[string]interface{}{
-		"success":    resp.GetSuccess(),
-		"message":    resp.GetMessage(),
-		"new_alias":  resp.GetNewAlias(),
+		"success":   resp.GetSuccess(),
+		"message":   resp.GetMessage(),
+		"new_alias": resp.GetNewAlias(),
 	}
 }
 
@@ -104,9 +113,9 @@ func GetPocketsRespJSON(resp *pb.GetPocketsByUserIdResponse) map[string]interfac
 
 func CreatePocketRespJSON(resp *pb.CreatePocketResponse) map[string]interface{} {
 	return map[string]interface{}{
-		"success":    resp.GetSuccess(),
-		"message":    resp.GetMessage(),
-		"pocket_id":  resp.GetPocketId(),
+		"success":   resp.GetSuccess(),
+		"message":   resp.GetMessage(),
+		"pocket_id": resp.GetPocketId(),
 	}
 }
 
@@ -131,10 +140,10 @@ func GetVerificationsRespJSON(resp *pb.GetVerificationsByUserIdResponse) map[str
 	var verifications []map[string]interface{}
 	for _, v := range resp.GetVerifications() {
 		verifications = append(verifications, map[string]interface{}{
-			"id":       v.GetId(),
-			"user_id":  v.GetUserId(),
-			"type":     v.GetType(),
-			"status":   v.GetStatus(),
+			"id":      v.GetId(),
+			"user_id": v.GetUserId(),
+			"type":    v.GetType(),
+			"status":  v.GetStatus(),
 		})
 	}
 	return map[string]interface{}{
@@ -157,9 +166,9 @@ func GetCountryCodesRespJSON(resp *pb.GetCountryCodesResponse) map[string]interf
 	var codes []map[string]interface{}
 	for _, c := range resp.GetCodes() {
 		codes = append(codes, map[string]interface{}{
-			"id":      c.GetId(),
-			"name":    c.GetName(),
-			"code":    c.GetCode(),
+			"id":   c.GetId(),
+			"name": c.GetName(),
+			"code": c.GetCode(),
 		})
 	}
 	return map[string]interface{}{

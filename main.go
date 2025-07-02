@@ -73,7 +73,9 @@ func main() {
 	apiRouter.HandleFunc("/country-codes", userProductHandler.GetCountryCodes).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/users", userProductHandler.CreateUser).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/users/{user_id}", userProductHandler.GetUser).Methods(http.MethodGet)
+	apiRouter.HandleFunc("/users/name/{username}", userProductHandler.GetUsername).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/login", AuthHandler.PostLogin).Methods(http.MethodPost)
+	apiRouter.HandleFunc("/logout", AuthHandler.PostLogout).Methods(http.MethodPost)
 	apiRouter.HandleFunc("/balance", TransactionHandler.GetBalance).Methods(http.MethodGet)
 	apiRouter.HandleFunc("/movements", TransactionHandler.GetMovements).Methods(http.MethodGet)
 

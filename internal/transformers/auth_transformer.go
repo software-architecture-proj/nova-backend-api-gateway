@@ -9,3 +9,10 @@ func LoginRespJSON(resp *pb.Response) map[string]interface{} {
 		"data":    resp.GetData(),
 	}
 }
+
+func LogOutRespJSON() map[string]interface{} {
+	return map[string]interface{}{
+		"success": "true",
+		"message": "Logged out successfully",
+	}
+}
